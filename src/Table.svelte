@@ -1,17 +1,26 @@
+<script context="module">
+  export const TABLE_KEY = {};
+  export const PAGINATION_KEY = {};
+</script>
+
 <script>
+  import { setContext, getContext } from 'svelte';
+  import { writable } from 'svelte/store';
+
   export let data = [],
     columns = [],
-    pageSize = null,
     rowID = undefined;
 
   let sortedData = [],
     sortedColumn,
-    direction,
-    page = 0;
+    direction;
+
+  const perPage = writable(null),
+    currentPage = writable(0),
+    dataLength = writable(data.length);
 
   export let rows = [],
-    headers = [],
-    pagination;
+    headers = [];
 
   const comparators = {
     ascending: (a, b) => (a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN),
@@ -35,17 +44,22 @@
       .sort((a, b) => comparators[direction](sort(a), sort(b)));
   };
 
+  setContext(TABLE_KEY, {
+    dataLength,
+    perPage,
+    currentPage
+  });
+
   setColumn(columns.find(d => d.default) || columns[0]);
 
+  $: dataLength.set(data.length);
   $: data, columns, sortedColumn, direction, sortRows();
-
-  $: pages = Math.ceil(data.length / pageSize) - 1;
-
-  $: setCurrentPage = p => (page = Math.max(Math.min(p, pages), 0));
 
   $: rows = sortedData
     .filter((_, i) =>
-      pageSize ? i >= page * pageSize && i < (page + 1) * pageSize : true
+      $perPage
+        ? i >= $currentPage * $perPage && i < ($currentPage + 1) * $perPage
+        : true
     )
     .map((row, i) => ({
       id: rowID ? row[rowID] : i,
@@ -61,20 +75,6 @@
     sort: col.sort ? () => setColumn(col) : null,
     sortDirection: col.id === sortedColumn.id ? direction : null
   }));
-
-  $: pagination = pageSize
-    ? {
-        totalRows: data.length,
-        firstVisibleRow: pageSize * page + 1,
-        lastVisibleRow: Math.min(pageSize * (page + 1), data.length),
-        currentPage: page,
-        setCurrentPage,
-        goToPreviousPage: () => setCurrentPage(page - 1),
-        goToNextPage: () => setCurrentPage(page + 1),
-        isFirstPage: page === 0,
-        isLastPage: page === pages
-      }
-    : null;
 </script>
 
 <slot />
