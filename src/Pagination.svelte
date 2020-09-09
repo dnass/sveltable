@@ -2,29 +2,27 @@
   import { setContext, getContext } from 'svelte';
   import { TABLE_KEY } from './Table.svelte';
 
-  const { dataLength, perPage, currentPage: page } = getContext(TABLE_KEY);
+  const { dataLength, perPage, currentPage } = getContext(TABLE_KEY);
 
   export let pageSize = null,
-    totalRows,
-    firstVisibleRow,
-    lastVisibleRow,
-    totalPages,
-    currentPage = 0;
-
-  export const setCurrentPage = p =>
-    page.set(Math.max(Math.min(p, totalPages), 0));
-
-  $: currentPage = $page;
+    state = {};
 
   $: perPage.set(pageSize);
 
-  $: totalPages = Math.ceil($dataLength / $perPage) - 1;
+  $: totalPages = Math.ceil($dataLength / $perPage);
 
-  $: totalRows = $dataLength;
+  export const setPage = page =>
+    currentPage.set(Math.max(Math.min(page, totalPages), 0));
 
-  $: firstVisibleRow = $perPage * $page + 1;
-
-  $: lastVisibleRow = Math.min($perPage * ($page + 1), $dataLength);
+  $: state = {
+    currentPage: $currentPage,
+    totalRows: $dataLength,
+    firstVisibleRow: $perPage * $currentPage + 1,
+    lastVisibleRow: Math.min($perPage * ($currentPage + 1), $dataLength),
+    totalPages,
+    isFirstPage: $currentPage === 0,
+    isLastPage: $currentPage === totalPages - 1
+  };
 </script>
 
 <slot />

@@ -1,6 +1,5 @@
 <script context="module">
   export const TABLE_KEY = {};
-  export const PAGINATION_KEY = {};
 </script>
 
 <script>
@@ -54,6 +53,7 @@
 
   $: dataLength.set(data.length);
   $: data, columns, sortedColumn, direction, sortRows();
+  $: data, currentPage.set(0);
 
   $: rows = sortedData
     .filter((_, i) =>
